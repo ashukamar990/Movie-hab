@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MovieHub - Movie Information & Trailers</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- POPUNDER AD - सबसे ऊपर HEAD में -->
+    <script type="text/javascript" src="https://pl28285060.effectivegatecpm.com/ad/04/2f/ad042f78be4046e14ece6c1cdf9f947a.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    
     <style>
         /* Reset and Base Styles */
         * {
@@ -21,6 +29,10 @@
             --text: #f1f1f1;
             --text-secondary: #b0b0b0;
             --card-bg: #0f3460;
+            --youtube: #ff0000;
+            --telegram: #0088cc;
+            --admin: #00b894;
+            --search-bg: rgba(255, 255, 255, 0.1);
         }
 
         body {
@@ -57,25 +69,119 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .logo {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--accent);
+            margin-bottom: 10px;
         }
 
         .logo span {
             color: var(--text);
         }
 
+        /* Search Bar Styles */
+        .search-container {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px 10px;
+            position: relative;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 20px;
+            padding-left: 50px;
+            background-color: var(--search-bg);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--secondary);
+            border-radius: 10px;
+            margin-top: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-result-item:hover {
+            background-color: rgba(233, 69, 96, 0.1);
+        }
+
+        .search-result-item img {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .search-result-info h4 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: var(--text);
+        }
+
+        .search-result-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
         nav ul {
             display: flex;
             list-style: none;
+            flex-wrap: wrap;
         }
 
         nav ul li {
-            margin-left: 25px;
+            margin-left: 15px;
             position: relative;
         }
 
@@ -85,6 +191,7 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            white-space: nowrap;
         }
 
         nav ul li a:hover {
@@ -305,7 +412,17 @@
             justify-content: space-between;
             color: var(--text-secondary);
             font-size: 0.9rem;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+        }
+
+        .movie-duration {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 8px;
         }
 
         .movie-genre {
@@ -408,85 +525,106 @@
             cursor: not-allowed;
         }
 
-        /* Content Page Styles */
-        .content-page {
+        /* Subscribe Page Styles */
+        .subscribe-page {
             display: none;
-            padding: 30px 0 50px;
+            padding: 40px 0;
+            text-align: center;
         }
 
-        .movie-detail-container {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .movie-detail-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .detail-poster {
-            width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .movie-details h1 {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-            color: var(--text);
-        }
-
-        .movie-year-genre {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            color: var(--text-secondary);
-        }
-
-        .movie-full-description {
-            font-size: 1.1rem;
-            line-height: 1.7;
-            margin-bottom: 30px;
-            color: var(--text-secondary);
-        }
-
-        .trailer-container {
-            margin: 40px 0;
-        }
-
-        .trailer-title {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            color: var(--text);
-        }
-
-        .trailer-placeholder {
+        .subscribe-container {
+            max-width: 600px;
+            margin: 0 auto;
             background-color: var(--secondary);
-            width: 100%;
-            height: 400px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            border: 2px dashed #444;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .trailer-placeholder i {
+        .subscribe-icon {
             font-size: 4rem;
+            color: var(--youtube);
             margin-bottom: 20px;
-            color: var(--accent);
         }
 
-        .disclaimer {
-            background-color: rgba(255, 0, 0, 0.1);
-            border-left: 4px solid #ff3333;
-            padding: 15px;
-            margin: 30px 0;
-            border-radius: 0 5px 5px 0;
+        .subscribe-title {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+
+        .subscribe-text {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .subscribe-btn {
+            background-color: var(--youtube);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .subscribe-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .telegram-btn {
+            background-color: var(--telegram);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            text-decoration: none;
+        }
+
+        .telegram-btn:hover {
+            background-color: #0077b3;
+        }
+
+        .smartlink-container {
+            background: rgba(233, 69, 96, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+
+        .smartlink-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), #ff2e4a);
+            color: white;
+            padding: 14px 30px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+            margin: 10px 0;
+        }
+
+        .smartlink-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
         }
 
         /* Legal Pages Styles */
@@ -544,7 +682,7 @@
             background-color: #d43a55;
         }
 
-        /* Social Bar Ad */
+        /* Social Bar Ad (Hidden as requested) */
         .social-bar {
             position: fixed;
             bottom: 0;
@@ -624,6 +762,182 @@
             letter-spacing: 1px;
         }
 
+        /* Admin Panel Styles */
+        .admin-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            padding: 20px;
+            overflow-y: auto;
+            color: var(--text);
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--admin);
+        }
+
+        .admin-title {
+            font-size: 2rem;
+            color: var(--admin);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-admin {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .admin-tab {
+            background-color: var(--secondary);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .admin-tab.active {
+            background-color: var(--admin);
+            color: white;
+        }
+
+        .admin-tab:hover {
+            background-color: rgba(0, 184, 148, 0.5);
+        }
+
+        .admin-section {
+            display: none;
+            background-color: var(--secondary);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .admin-section.active {
+            display: block;
+        }
+
+        .admin-section h2 {
+            color: var(--admin);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .admin-form-group {
+            margin-bottom: 20px;
+        }
+
+        .admin-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .admin-form-group input,
+        .admin-form-group textarea,
+        .admin-form-group select {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 5px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .admin-form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .admin-form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .admin-btn {
+            background-color: var(--admin);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .admin-btn:hover {
+            background-color: #00a085;
+        }
+
+        .admin-btn-danger {
+            background-color: var(--accent);
+        }
+
+        .admin-btn-danger:hover {
+            background-color: #d43a55;
+        }
+
+        .movie-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .movie-list-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .admin-status {
+            padding: 10px;
+            background-color: rgba(0, 184, 148, 0.1);
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--admin);
+        }
+
+        .admin-status.error {
+            background-color: rgba(233, 69, 96, 0.1);
+            border-left-color: var(--accent);
+        }
+
         /* Responsive Styles */
         @media (max-width: 992px) {
             nav ul {
@@ -642,11 +956,58 @@
             .section-title {
                 font-size: 1.5rem;
             }
+            
+            .admin-form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container {
+                order: 3;
+                margin: 10px 0;
+                max-width: 100%;
+            }
+            
+            .logo {
+                order: 1;
+            }
+            
+            nav {
+                order: 2;
+                align-self: flex-end;
+                margin-top: -45px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-results {
+                position: fixed;
+                top: 70px;
+                left: 20px;
+                right: 20px;
+                max-height: 300px;
+            }
         }
 
         @media (max-width: 576px) {
             .movie-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .admin-tabs {
+                flex-direction: column;
+            }
+            
+            nav ul li {
+                margin-left: 10px;
+            }
+            
+            nav ul li a {
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -656,6 +1017,16 @@
     <header>
         <div class="container header-container">
             <div class="logo">Movie<span>Hub</span></div>
+            
+            <!-- Search Bar -->
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-box" id="searchBox" placeholder="Search movies by title or genre...">
+                <div class="search-results" id="searchResults">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+            
             <nav>
                 <ul id="navMenu">
                     <li><a href="#" id="homeLink"><i class="fas fa-home"></i> Home</a></li>
@@ -712,10 +1083,17 @@
     <!-- Top Banner Ad -->
     <div class="container">
         <div class="banner-ad" id="topBannerAd">
-            <div>
-                <div class="ad-label">Advertisement</div>
-                <div>Banner Ad (728x90) - Replace with Adsterra code</div>
-            </div>
+            <!-- BANNER AD (728x90) -->
+            <script type="text/javascript">
+                atOptions = {
+                    'key' : '07db903793df9621b6952682b40516cc',
+                    'format' : 'iframe',
+                    'height' : 90,
+                    'width' : 728,
+                    'params' : {}
+                };
+            </script>
+            <script type="text/javascript" src="https://www.highperformanceformat.com/07db903793df9621b6952682b40516cc/invoke.js"></script>
         </div>
     </div>
 
@@ -725,10 +1103,17 @@
         
         <!-- Middle Banner Ad -->
         <div class="banner-ad" id="middleBannerAd">
-            <div>
-                <div class="ad-label">Advertisement</div>
-                <div>Banner Ad (728x90) - Replace with Adsterra code</div>
-            </div>
+            <!-- BANNER AD (728x90) - Second Placement -->
+            <script type="text/javascript">
+                atOptions = {
+                    'key' : '07db903793df9621b6952682b40516cc',
+                    'format' : 'iframe',
+                    'height' : 90,
+                    'width' : 728,
+                    'params' : {}
+                };
+            </script>
+            <script type="text/javascript" src="https://www.highperformanceformat.com/07db903793df9621b6952682b40516cc/invoke.js"></script>
         </div>
         
         <div class="movie-grid" id="movieGrid">
@@ -745,12 +1130,34 @@
             <h1 class="wait-title">Please Wait</h1>
             <p class="wait-text">We're preparing the page for you. This should only take a moment.</p>
             
+            <!-- SMARTLINK AD SECTION -->
+            <div class="smartlink-container">
+                <h3 style="color: var(--accent); margin-bottom: 15px;"><i class="fas fa-bolt"></i> Instant Access Available</h3>
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Skip the wait! Complete a quick offer for immediate access to movie details:</p>
+                <a href="#" 
+                   target="_blank" 
+                   class="smartlink-btn"
+                   id="instantAccessBtn">
+                    <i class="fas fa-rocket"></i> CLICK FOR INSTANT ACCESS
+                </a>
+                <p style="font-size: 0.9rem; color: #aaa; margin-top: 12px; font-style: italic;">
+                    <i class="fas fa-info-circle"></i> Supports our free service & helps us keep MovieHub running
+                </p>
+            </div>
+            
             <!-- Banner Ad on Wait Page -->
             <div class="banner-ad" id="waitBannerAd">
-                <div>
-                    <div class="ad-label">Advertisement</div>
-                    <div>Banner Ad (728x90) - Replace with Adsterra code</div>
-                </div>
+                <!-- BANNER AD (728x90) - Third Placement -->
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : '07db903793df9621b6952682b40516cc',
+                        'format' : 'iframe',
+                        'height' : 90,
+                        'width' : 728,
+                        'params' : {}
+                    };
+                </script>
+                <script type="text/javascript" src="https://www.highperformanceformat.com/07db903793df9621b6952682b40516cc/invoke.js"></script>
             </div>
             
             <div class="countdown" id="countdown">30</div>
@@ -760,33 +1167,64 @@
         </div>
     </div>
 
-    <!-- Content Page -->
-    <div id="contentPage" class="content-page container">
-        <!-- Banner Ad on Content Page -->
-        <div class="banner-ad" id="contentBannerAd">
-            <div>
-                <div class="ad-label">Advertisement</div>
-                <div>Banner Ad (728x90) - Replace with Adsterra code</div>
+    <!-- Subscribe Page -->
+    <div id="subscribePage" class="subscribe-page container">
+        <div class="subscribe-container">
+            <div class="subscribe-icon">
+                <i class="fab fa-youtube"></i>
+            </div>
+            <h1 class="subscribe-title">Subscribe to Get Movie Link</h1>
+            <p class="subscribe-text">Please subscribe to our YouTube channel to get the movie download link.</p>
+            
+            <!-- SMARTLINK AD ON SUBSCRIBE PAGE -->
+            <div class="smartlink-container">
+                <h3 style="color: var(--accent); margin-bottom: 15px;"><i class="fas fa-bolt"></i> Instant Access Available</h3>
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Skip the wait! Complete a quick offer for immediate access to movie details:</p>
+                <a href="#" 
+                   target="_blank" 
+                   class="smartlink-btn"
+                   id="subscribeInstantAccessBtn">
+                    <i class="fas fa-rocket"></i> CLICK FOR INSTANT ACCESS
+                </a>
+                <p style="font-size: 0.9rem; color: #aaa; margin-top: 12px; font-style: italic;">
+                    <i class="fas fa-info-circle"></i> Supports our free service & helps us keep MovieHub running
+                </p>
+            </div>
+            
+            <!-- Back Timer -->
+            <div class="countdown" id="subscribeCountdown">60</div>
+            <p class="countdown-text">Please wait while we prepare your access link...</p>
+            
+            <!-- YouTube Section (Hidden initially) -->
+            <div id="youtubeSection" style="display: none;">
+                <h2 style="color: var(--text); margin-bottom: 20px;">Subscribe to Our YouTube Channel</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Click the button below to subscribe to our YouTube channel. After subscribing, you will get the Telegram bot link.</p>
+                
+                <a href="#" target="_blank" class="subscribe-btn" id="youtubeChannelBtn">
+                    <i class="fab fa-youtube"></i> Subscribe to YouTube Channel
+                </a>
+                
+                <p style="color: var(--text-secondary); margin: 20px 0;">After subscribing, click the button below:</p>
+                
+                <button class="continue-btn" id="subscribedBtn">
+                    <i class="fas fa-check-circle"></i> I Have Subscribed
+                </button>
+            </div>
+            
+            <!-- Telegram Section (Hidden initially) -->
+            <div id="telegramSection" style="display: none;">
+                <h2 style="color: var(--text); margin-bottom: 20px;">Get Movie Link via Telegram</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Click the button below to open our Telegram bot. The bot will provide you with the movie download link.</p>
+                
+                <a href="#" target="_blank" class="telegram-btn" id="telegramBotBtn">
+                    <i class="fab fa-telegram"></i> Open Telegram Bot
+                </a>
+                
+                <p style="color: var(--text-secondary); margin-top: 20px; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> The Telegram bot will send you the direct download link for the movie.
+                </p>
             </div>
         </div>
-        
-        <div class="movie-detail-container" id="movieDetailContainer">
-            <!-- Movie details will be populated by JavaScript -->
-        </div>
-        
-        <!-- Native Ad on Content Page -->
-        <div class="banner-ad" id="nativeAd">
-            <div>
-                <div class="ad-label">Advertisement</div>
-                <div>Native Ad - Replace with Adsterra code</div>
-            </div>
-        </div>
-        
-        <div class="disclaimer">
-            <p><strong>Disclaimer:</strong> We do not host, stream, or upload any movies. All content shown is for informational purposes only. We only provide movie information and official trailers when available.</p>
-        </div>
-        
-        <a href="#" class="back-btn" id="backToHomeBtn"><i class="fas fa-arrow-left"></i> Back to Home</a>
     </div>
 
     <!-- Legal Pages -->
@@ -836,8 +1274,8 @@
         <a href="#" class="back-btn" id="backToHomeFromAboutBtn"><i class="fas fa-arrow-left"></i> Back to Home</a>
     </div>
 
-    <!-- Social Bar Ad -->
-    <div class="social-bar" id="socialBar">
+    <!-- Social Bar Ad (Hidden as requested) -->
+    <div class="social-bar" id="socialBar" style="display: none;">
         <div class="ad-label">Advertisement</div>
         <div>Social Bar Ad - Replace with Adsterra code</div>
     </div>
@@ -893,13 +1331,263 @@
         </div>
     </div>
 
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel">
+        <div class="container">
+            <div class="admin-header">
+                <h1 class="admin-title"><i class="fas fa-cogs"></i> MovieHub Admin Panel</h1>
+                <button class="close-admin" id="closeAdminBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="admin-status" id="adminStatus"></div>
+            
+            <div class="admin-tabs">
+                <div class="admin-tab active" data-tab="settings">Settings</div>
+                <div class="admin-tab" data-tab="movies">Movies</div>
+                <div class="admin-tab" data-tab="legal">Legal Content</div>
+                <div class="admin-tab" data-tab="cache">Cache</div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div class="admin-section active" id="settingsTab">
+                <h2><i class="fas fa-sliders-h"></i> Website Settings</h2>
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>YouTube Channel Link</label>
+                        <input type="text" id="adminYoutubeLink" placeholder="https://www.youtube.com/channel/...">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Telegram Bot Link</label>
+                        <input type="text" id="adminTelegramLink" placeholder="https://t.me/...">
+                    </div>
+                </div>
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Instant Access Smartlink</label>
+                        <input type="text" id="adminInstantLink" placeholder="https://www.effectivegatecpm.com/...">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Default Movie Duration</label>
+                        <input type="text" id="adminDefaultDuration" placeholder="2h 15min">
+                    </div>
+                </div>
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Wait Page Countdown (seconds)</label>
+                        <input type="number" id="adminWaitCountdown" placeholder="30">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Subscribe Page Countdown (seconds)</label>
+                        <input type="number" id="adminSubscribeCountdown" placeholder="60">
+                    </div>
+                </div>
+                <button class="admin-btn" id="saveSettingsBtn">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+            
+            <!-- Movies Tab -->
+            <div class="admin-section" id="moviesTab">
+                <h2><i class="fas fa-film"></i> Manage Movies</h2>
+                <div id="moviesList">
+                    <!-- Movies will be loaded here -->
+                </div>
+                <button class="admin-btn" id="addMovieBtn">
+                    <i class="fas fa-plus"></i> Add New Movie
+                </button>
+                
+                <!-- Movie Form (Hidden by default) -->
+                <div id="movieForm" style="display: none; margin-top: 30px;">
+                    <h3><i class="fas fa-edit"></i> Edit Movie</h3>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Movie Title</label>
+                            <input type="text" id="movieTitle" placeholder="Movie Title">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Release Year</label>
+                            <input type="number" id="movieYear" placeholder="2023">
+                        </div>
+                    </div>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Duration</label>
+                            <input type="text" id="movieDuration" placeholder="2h 15min">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Genre</label>
+                            <input type="text" id="movieGenre" placeholder="Action, Adventure">
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Short Description</label>
+                        <textarea id="movieDescription" placeholder="Brief description..."></textarea>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Full Description</label>
+                        <textarea id="movieFullDescription" placeholder="Full detailed description..."></textarea>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Poster Image URL</label>
+                        <input type="text" id="moviePoster" placeholder="https://images.unsplash.com/...">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Movie ID (Auto-generated)</label>
+                        <input type="text" id="movieId" readonly>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <button class="admin-btn" id="saveMovieBtn">
+                            <i class="fas fa-save"></i> Save Movie
+                        </button>
+                        <button class="admin-btn admin-btn-danger" id="cancelMovieBtn">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button class="admin-btn admin-btn-danger" id="deleteMovieBtn" style="display: none;">
+                            <i class="fas fa-trash"></i> Delete Movie
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Legal Content Tab -->
+            <div class="admin-section" id="legalTab">
+                <h2><i class="fas fa-gavel"></i> Legal Content</h2>
+                <div class="admin-form-group">
+                    <label>Select Legal Page</label>
+                    <select id="legalPageSelect">
+                        <option value="disclaimer">Disclaimer</option>
+                        <option value="privacy">Privacy Policy</option>
+                        <option value="copyright">Copyright Policy</option>
+                        <option value="dmca">DMCA Policy</option>
+                        <option value="terms">Terms & Conditions</option>
+                        <option value="contact">Contact & Report</option>
+                    </select>
+                </div>
+                <div class="admin-form-group">
+                    <label>Page Title</label>
+                    <input type="text" id="legalTitle" placeholder="Disclaimer">
+                </div>
+                <div class="admin-form-group">
+                    <label>Page Content (HTML)</label>
+                    <textarea id="legalContentEditor" style="min-height: 300px;"></textarea>
+                </div>
+                <button class="admin-btn" id="saveLegalBtn">
+                    <i class="fas fa-save"></i> Save Legal Content
+                </button>
+            </div>
+            
+            <!-- Cache Tab -->
+            <div class="admin-section" id="cacheTab">
+                <h2><i class="fas fa-database"></i> Cache Management</h2>
+                <div class="admin-form-group">
+                    <label>Cache Status</label>
+                    <div id="cacheStatus" style="padding: 15px; background-color: rgba(255,255,255,0.05); border-radius: 5px;">
+                        Loading cache information...
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="admin-btn" id="refreshCacheBtn">
+                        <i class="fas fa-sync-alt"></i> Refresh Cache from Firebase
+                    </button>
+                    <button class="admin-btn admin-btn-danger" id="clearCacheBtn">
+                        <i class="fas fa-trash"></i> Clear Local Cache
+                    </button>
+                    <button class="admin-btn" id="exportDataBtn">
+                        <i class="fas fa-download"></i> Export Data as JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Movie Data
-        const movies = [
+        // ============================
+        // FIREBASE CONFIGURATION
+        // ============================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0fPZlqOFRTMeD6hpEiH44PpnmPFO6Q2c",
+            authDomain: "videomanager-624e1.firebaseapp.com",
+            databaseURL: "https://videomanager-624e1-default-rtdb.firebaseio.com",
+            projectId: "videomanager-624e1",
+            storageBucket: "videomanager-624e1.firebasestorage.app",
+            messagingSenderId: "765444424611",
+            appId: "1:765444424611:web:1eb622bc7239b20ec01016"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ============================
+        // LOCAL STORAGE CACHE SYSTEM
+        // ============================
+        const CACHE_KEYS = {
+            SETTINGS: 'moviehub_settings_v2',
+            MOVIES: 'moviehub_movies_v2',
+            LEGAL: 'moviehub_legal_v2',
+            TIMESTAMP: 'moviehub_cache_timestamp_v2'
+        };
+
+        const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        // Cache functions
+        function saveToCache(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                localStorage.setItem(CACHE_KEYS.TIMESTAMP, Date.now());
+                console.log(`Saved to cache: ${key}`);
+                return true;
+            } catch (e) {
+                console.error('Error saving to cache:', e);
+                return false;
+            }
+        }
+
+        function getFromCache(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.error('Error reading from cache:', e);
+                return null;
+            }
+        }
+
+        function isCacheValid() {
+            const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+            if (!timestamp) return false;
+            
+            const age = Date.now() - parseInt(timestamp);
+            return age < CACHE_DURATION;
+        }
+
+        function clearCache() {
+            Object.values(CACHE_KEYS).forEach(key => {
+                localStorage.removeItem(key);
+            });
+            console.log('Cache cleared');
+        }
+
+        // ============================
+        // DEFAULT DATA (Fallback)
+        // ============================
+        const defaultAdminSettings = {
+            youtubeChannelLink: "https://www.youtube.com/channel/YOUR_CHANNEL_ID",
+            telegramBotLink: "https://t.me/YOUR_BOT_USERNAME",
+            instantAccessLink: "https://www.effectivegatecpm.com/hgsuvg6e?key=fc9e62ede19fc0ec18e7ddeb811496ae",
+            defaultDuration: "2h 15min",
+            waitCountdownTime: 30,
+            subscribeCountdownTime: 60
+        };
+
+        const defaultMovies = [
             {
                 id: 1,
                 title: "The Last Adventure",
                 year: 2023,
+                duration: "2h 15min",
                 genre: "Action, Adventure",
                 description: "A team of explorers embarks on a perilous journey to uncover ancient secrets in a lost world filled with danger and mystery.",
                 poster: "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -909,6 +1597,7 @@
                 id: 2,
                 title: "Midnight in Paris",
                 year: 2022,
+                duration: "1h 48min",
                 genre: "Drama, Romance",
                 description: "A nostalgic writer finds himself mysteriously traveling back to the 1920s every night at midnight, exploring the city of love in a different era.",
                 poster: "https://images.unsplash.com/photo-1542204165-65bf26472b9b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -918,6 +1607,7 @@
                 id: 3,
                 title: "Cyber Revolution",
                 year: 2023,
+                duration: "2h 32min",
                 genre: "Sci-Fi, Thriller",
                 description: "In a dystopian future where AI controls society, a rogue hacker discovers a way to restore human free will and must fight against the system.",
                 poster: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -927,6 +1617,7 @@
                 id: 4,
                 title: "Ocean's Echo",
                 year: 2021,
+                duration: "1h 56min",
                 genre: "Mystery, Drama",
                 description: "A marine biologist investigating mysterious underwater sounds discovers a secret that could change our understanding of ocean life forever.",
                 poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -936,6 +1627,7 @@
                 id: 5,
                 title: "The Silent Witness",
                 year: 2022,
+                duration: "2h 8min",
                 genre: "Thriller, Crime",
                 description: "A courtroom drama where the only witness to a high-profile crime is a man with selective mutism who must find a way to communicate what he saw.",
                 poster: "https://images.unsplash.com/photo-1543536448-d209d2d13a1c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -945,6 +1637,7 @@
                 id: 6,
                 title: "Aurora's Dream",
                 year: 2023,
+                duration: "1h 52min",
                 genre: "Fantasy, Adventure",
                 description: "A young girl discovers she can enter other people's dreams and must use this ability to stop a nightmare entity from destroying the waking world.",
                 poster: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -952,8 +1645,7 @@
             }
         ];
 
-        // Legal content
-        const legalContent = {
+        const defaultLegalContent = {
             disclaimer: {
                 title: "Disclaimer",
                 content: `
@@ -1155,17 +1847,25 @@
             }
         };
 
+        // ============================
+        // GLOBAL VARIABLES
+        // ============================
+        let adminSettings = { ...defaultAdminSettings };
+        let movies = [...defaultMovies ];
+        let legalContent = { ...defaultLegalContent };
+        
         // DOM Elements
         const homePage = document.getElementById('homePage');
         const waitPage = document.getElementById('waitPage');
-        const contentPage = document.getElementById('contentPage');
+        const subscribePage = document.getElementById('subscribePage');
         const legalPages = document.getElementById('legalPages');
         const aboutPage = document.getElementById('aboutPage');
         const movieGrid = document.getElementById('movieGrid');
-        const movieDetailContainer = document.getElementById('movieDetailContainer');
         const legalContentElement = document.getElementById('legalContent');
         const countdownElement = document.getElementById('countdown');
         const continueBtn = document.getElementById('continueBtn');
+        const instantAccessBtn = document.getElementById('instantAccessBtn');
+        const subscribeInstantAccessBtn = document.getElementById('subscribeInstantAccessBtn');
         const interstitialAd = document.getElementById('interstitialAd');
         const closeAdBtn = document.getElementById('closeAdBtn');
         const adCountdown = document.getElementById('adCountdown');
@@ -1174,6 +1874,16 @@
         const closeMenuBtn = document.getElementById('closeMenuBtn');
         const mobileLegalBtn = document.getElementById('mobileLegalBtn');
         const mobileLegalMenu = document.getElementById('mobileLegalMenu');
+        const subscribeCountdown = document.getElementById('subscribeCountdown');
+        const youtubeSection = document.getElementById('youtubeSection');
+        const telegramSection = document.getElementById('telegramSection');
+        const youtubeChannelBtn = document.getElementById('youtubeChannelBtn');
+        const telegramBotBtn = document.getElementById('telegramBotBtn');
+        const subscribedBtn = document.getElementById('subscribedBtn');
+        
+        // Search Elements
+        const searchBox = document.getElementById('searchBox');
+        const searchResults = document.getElementById('searchResults');
 
         // Navigation Elements
         const homeLink = document.getElementById('homeLink');
@@ -1208,48 +1918,392 @@
         const footerAdvertiseLink = document.getElementById('footerAdvertiseLink');
         
         // Back buttons
-        const backToHomeBtn = document.getElementById('backToHomeBtn');
         const backToHomeFromLegalBtn = document.getElementById('backToHomeFromLegalBtn');
         const backToHomeFromAboutBtn = document.getElementById('backToHomeFromAboutBtn');
+
+        // Admin Panel Elements
+        const adminPanel = document.getElementById('adminPanel');
+        const closeAdminBtn = document.getElementById('closeAdminBtn');
+        const adminTabs = document.querySelectorAll('.admin-tab');
+        const adminSections = document.querySelectorAll('.admin-section');
+        const adminStatus = document.getElementById('adminStatus');
+        
+        // Settings Tab
+        const adminYoutubeLink = document.getElementById('adminYoutubeLink');
+        const adminTelegramLink = document.getElementById('adminTelegramLink');
+        const adminInstantLink = document.getElementById('adminInstantLink');
+        const adminDefaultDuration = document.getElementById('adminDefaultDuration');
+        const adminWaitCountdown = document.getElementById('adminWaitCountdown');
+        const adminSubscribeCountdown = document.getElementById('adminSubscribeCountdown');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        
+        // Movies Tab
+        const moviesList = document.getElementById('moviesList');
+        const addMovieBtn = document.getElementById('addMovieBtn');
+        const movieForm = document.getElementById('movieForm');
+        const movieTitle = document.getElementById('movieTitle');
+        const movieYear = document.getElementById('movieYear');
+        const movieDuration = document.getElementById('movieDuration');
+        const movieGenre = document.getElementById('movieGenre');
+        const movieDescription = document.getElementById('movieDescription');
+        const movieFullDescription = document.getElementById('movieFullDescription');
+        const moviePoster = document.getElementById('moviePoster');
+        const movieId = document.getElementById('movieId');
+        const saveMovieBtn = document.getElementById('saveMovieBtn');
+        const cancelMovieBtn = document.getElementById('cancelMovieBtn');
+        const deleteMovieBtn = document.getElementById('deleteMovieBtn');
+        
+        // Legal Tab
+        const legalPageSelect = document.getElementById('legalPageSelect');
+        const legalTitle = document.getElementById('legalTitle');
+        const legalContentEditor = document.getElementById('legalContentEditor');
+        const saveLegalBtn = document.getElementById('saveLegalBtn');
+        
+        // Cache Tab
+        const cacheStatus = document.getElementById('cacheStatus');
+        const refreshCacheBtn = document.getElementById('refreshCacheBtn');
+        const clearCacheBtn = document.getElementById('clearCacheBtn');
+        const exportDataBtn = document.getElementById('exportDataBtn');
 
         // State variables
         let currentMovieId = null;
         let countdownInterval = null;
+        let subscribeCountdownInterval = null;
         let adInterval = null;
         let popunderShown = false;
         let interstitialShown = false;
+        let instantAccessClicked = false;
+        let isEditingMovie = false;
+        let currentEditingMovieId = null;
+        let searchTimeout = null;
 
-        // Initialize the page
-        function init() {
+        // ============================
+        // FIREBASE FUNCTIONS
+        // ============================
+        async function loadFromFirebase() {
+            try {
+                console.log('Loading data from Firebase...');
+                
+                // Load settings
+                const settingsSnapshot = await database.ref('settings').once('value');
+                if (settingsSnapshot.exists()) {
+                    const firebaseSettings = settingsSnapshot.val();
+                    adminSettings = { ...defaultAdminSettings, ...firebaseSettings };
+                    saveToCache(CACHE_KEYS.SETTINGS, adminSettings);
+                    console.log('Settings loaded from Firebase');
+                }
+                
+                // Load movies
+                const moviesSnapshot = await database.ref('movies').once('value');
+                if (moviesSnapshot.exists()) {
+                    const firebaseMovies = [];
+                    const moviesData = moviesSnapshot.val();
+                    
+                    Object.keys(moviesData).forEach(key => {
+                        firebaseMovies.push({
+                            id: parseInt(key),
+                            ...moviesData[key]
+                        });
+                    });
+                    
+                    // Sort by ID
+                    firebaseMovies.sort((a, b) => a.id - b.id);
+                    movies = firebaseMovies;
+                    saveToCache(CACHE_KEYS.MOVIES, movies);
+                    console.log(`Movies loaded from Firebase: ${movies.length} movies`);
+                }
+                
+                // Load legal content
+                const legalSnapshot = await database.ref('legal').once('value');
+                if (legalSnapshot.exists()) {
+                    legalContent = { ...defaultLegalContent, ...legalSnapshot.val() };
+                    saveToCache(CACHE_KEYS.LEGAL, legalContent);
+                    console.log('Legal content loaded from Firebase');
+                }
+                
+                console.log('Data loaded successfully from Firebase');
+                return true;
+            } catch (error) {
+                console.error('Error loading from Firebase:', error);
+                return false;
+            }
+        }
+
+        async function saveSettingsToFirebase() {
+            try {
+                await database.ref('settings').set(adminSettings);
+                saveToCache(CACHE_KEYS.SETTINGS, adminSettings);
+                showAdminStatus('Settings saved successfully!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showAdminStatus('Error saving settings: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function saveMoviesToFirebase() {
+            try {
+                // Convert array to object with IDs as keys
+                const moviesObject = {};
+                movies.forEach(movie => {
+                    const { id, ...movieData } = movie;
+                    moviesObject[id] = movieData;
+                });
+                
+                await database.ref('movies').set(moviesObject);
+                saveToCache(CACHE_KEYS.MOVIES, movies);
+                showAdminStatus('Movies saved successfully!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Error saving movies:', error);
+                showAdminStatus('Error saving movies: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function saveLegalToFirebase() {
+            try {
+                await database.ref('legal').set(legalContent);
+                saveToCache(CACHE_KEYS.LEGAL, legalContent);
+                showAdminStatus('Legal content saved successfully!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Error saving legal content:', error);
+                showAdminStatus('Error saving legal content: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // ============================
+        // INITIALIZATION
+        // ============================
+        async function init() {
+            console.log('Initializing MovieHub...');
+            
+            // Load data immediately from cache
+            loadFromCache();
+            
+            // Setup event listeners immediately
+            setupEventListeners();
+            
+            // Show popunder after delay
+            setTimeout(showPopunderAd, 3000);
+            
+            // Hide social bar as requested
+            document.getElementById('socialBar').style.display = 'none';
+            
+            // Setup admin panel keyboard shortcut
+            setupAdminShortcut();
+            
+            // Load from Firebase in background
+            setTimeout(async () => {
+                await loadFromFirebase();
+                updateUIWithData();
+                console.log('Background Firebase sync completed');
+            }, 100);
+        }
+
+        function loadFromCache() {
+            console.log('Loading from cache...');
+            
+            // Load settings from cache
+            const cachedSettings = getFromCache(CACHE_KEYS.SETTINGS);
+            if (cachedSettings) {
+                adminSettings = cachedSettings;
+                console.log('Settings loaded from cache');
+            }
+            
+            // Load movies from cache
+            const cachedMovies = getFromCache(CACHE_KEYS.MOVIES);
+            if (cachedMovies) {
+                movies = cachedMovies;
+                console.log(`Movies loaded from cache: ${movies.length} movies`);
+            }
+            
+            // Load legal content from cache
+            const cachedLegal = getFromCache(CACHE_KEYS.LEGAL);
+            if (cachedLegal) {
+                legalContent = cachedLegal;
+                console.log('Legal content loaded from cache');
+            }
+            
+            // Update UI with cached data immediately
+            updateUIWithData();
+        }
+
+        function updateUIWithData() {
+            // Update links with admin settings
+            youtubeChannelBtn.href = adminSettings.youtubeChannelLink || '#';
+            telegramBotBtn.href = adminSettings.telegramBotLink || '#';
+            instantAccessBtn.href = adminSettings.instantAccessLink || '#';
+            subscribeInstantAccessBtn.href = adminSettings.instantAccessLink || '#';
+            
             // Generate movie cards
             generateMovieCards();
             
-            // Setup event listeners
-            setupEventListeners();
+            // Update admin panel form if open
+            if (adminPanel.classList.contains('active')) {
+                updateAdminForms();
+            }
             
-            // Show popunder on first visit (simulated)
-            setTimeout(showPopunderAd, 3000);
-            
-            // Show social bar after a delay
-            setTimeout(() => {
-                document.getElementById('socialBar').style.display = 'block';
-            }, 2000);
+            // Update cache status
+            updateCacheStatus();
         }
 
-        // Generate movie cards for homepage
+        // ============================
+        // SEARCH FUNCTIONALITY
+        // ============================
+        function setupSearch() {
+            searchBox.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                
+                const query = this.value.trim().toLowerCase();
+                
+                if (query.length === 0) {
+                    searchResults.classList.remove('active');
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300);
+            });
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.classList.remove('active');
+                }
+            });
+            
+            // Handle search box focus
+            searchBox.addEventListener('focus', function() {
+                const query = this.value.trim().toLowerCase();
+                if (query.length > 0) {
+                    performSearch(query);
+                }
+            });
+        }
+
+        function performSearch(query) {
+            if (!query || query.length < 2) {
+                searchResults.classList.remove('active');
+                return;
+            }
+            
+            const searchTerms = query.split(' ').filter(term => term.length > 0);
+            const results = [];
+            
+            // Search in movies
+            movies.forEach(movie => {
+                let matchScore = 0;
+                
+                // Check title
+                const titleLower = movie.title.toLowerCase();
+                searchTerms.forEach(term => {
+                    if (titleLower.includes(term)) {
+                        matchScore += 3; // Higher weight for title matches
+                    }
+                });
+                
+                // Check genre
+                const genreLower = movie.genre.toLowerCase();
+                searchTerms.forEach(term => {
+                    if (genreLower.includes(term)) {
+                        matchScore += 2; // Medium weight for genre matches
+                    }
+                });
+                
+                // Check description
+                const descLower = movie.description.toLowerCase();
+                searchTerms.forEach(term => {
+                    if (descLower.includes(term)) {
+                        matchScore += 1; // Lower weight for description matches
+                    }
+                });
+                
+                // Check year
+                const yearStr = movie.year.toString();
+                searchTerms.forEach(term => {
+                    if (yearStr.includes(term)) {
+                        matchScore += 1; // Lower weight for year matches
+                    }
+                });
+                
+                if (matchScore > 0) {
+                    results.push({
+                        movie: movie,
+                        score: matchScore
+                    });
+                }
+            });
+            
+            // Sort by score (highest first)
+            results.sort((a, b) => b.score - a.score);
+            
+            // Display results
+            displaySearchResults(results.slice(0, 10)); // Show top 10 results
+        }
+
+        function displaySearchResults(results) {
+            searchResults.innerHTML = '';
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="no-results">No movies found</div>';
+                searchResults.classList.add('active');
+                return;
+            }
+            
+            results.forEach(result => {
+                const movie = result.movie;
+                const resultItem = document.createElement('div');
+                resultItem.className = 'search-result-item';
+                resultItem.innerHTML = `
+                    <img src="${movie.poster}" alt="${movie.title}" onerror="this.src='https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'">
+                    <div class="search-result-info">
+                        <h4>${movie.title} (${movie.year})</h4>
+                        <p>${movie.genre} • ${movie.duration || adminSettings.defaultDuration}</p>
+                        <p>${movie.description.substring(0, 60)}...</p>
+                    </div>
+                `;
+                
+                resultItem.addEventListener('click', () => {
+                    searchBox.value = '';
+                    searchResults.classList.remove('active');
+                    showInterstitialAd(movie.id);
+                });
+                
+                searchResults.appendChild(resultItem);
+            });
+            
+            searchResults.classList.add('active');
+        }
+
+        // ============================
+        // MOVIE CARD GENERATION
+        // ============================
         function generateMovieCards() {
             movieGrid.innerHTML = '';
+            
+            if (movies.length === 0) {
+                movieGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary); grid-column: 1 / -1;">No movies found. Please add movies in the admin panel.</p>';
+                return;
+            }
             
             movies.forEach(movie => {
                 const movieCard = document.createElement('div');
                 movieCard.className = 'movie-card';
                 movieCard.innerHTML = `
-                    <img src="${movie.poster}" alt="${movie.title}" class="movie-poster">
+                    <img src="${movie.poster}" alt="${movie.title}" class="movie-poster" onerror="this.src='https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
                     <div class="movie-info">
                         <h3 class="movie-title">${movie.title}</h3>
                         <div class="movie-meta">
                             <span class="movie-year">${movie.year}</span>
                             <span class="movie-genre">${movie.genre}</span>
+                        </div>
+                        <div class="movie-duration">
+                            <i class="fas fa-clock"></i> ${movie.duration || adminSettings.defaultDuration}
                         </div>
                         <p class="movie-description">${movie.description}</p>
                         <button class="view-btn" data-id="${movie.id}">View Details</button>
@@ -1267,7 +2321,190 @@
             });
         }
 
-        // Setup all event listeners
+        // ============================
+        // ADMIN PANEL FUNCTIONS
+        // ============================
+        function setupAdminShortcut() {
+            let keysPressed = {};
+            
+            document.addEventListener('keydown', (e) => {
+                keysPressed[e.key] = true;
+                
+                // Check for Ctrl+Alt+M
+                if ((keysPressed['Control'] || keysPressed['Meta']) && keysPressed['Alt'] && keysPressed['m']) {
+                    e.preventDefault();
+                    openAdminPanel();
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                delete keysPressed[e.key];
+            });
+        }
+
+        function openAdminPanel() {
+            adminPanel.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            updateAdminForms();
+            updateCacheStatus();
+        }
+
+        function closeAdminPanel() {
+            adminPanel.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            resetMovieForm();
+        }
+
+        function updateAdminForms() {
+            // Update settings form
+            adminYoutubeLink.value = adminSettings.youtubeChannelLink || '';
+            adminTelegramLink.value = adminSettings.telegramBotLink || '';
+            adminInstantLink.value = adminSettings.instantAccessLink || '';
+            adminDefaultDuration.value = adminSettings.defaultDuration || '';
+            adminWaitCountdown.value = adminSettings.waitCountdownTime || 30;
+            adminSubscribeCountdown.value = adminSettings.subscribeCountdownTime || 60;
+            
+            // Update movies list
+            updateMoviesList();
+            
+            // Update legal content form
+            updateLegalForm();
+        }
+
+        function updateMoviesList() {
+            moviesList.innerHTML = '';
+            
+            if (movies.length === 0) {
+                moviesList.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No movies added yet.</p>';
+                return;
+            }
+            
+            movies.forEach(movie => {
+                const movieItem = document.createElement('div');
+                movieItem.className = 'movie-list-item';
+                movieItem.innerHTML = `
+                    <div>
+                        <strong>${movie.title}</strong> (${movie.year})
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;">
+                            ${movie.genre} • ${movie.duration || adminSettings.defaultDuration}
+                        </div>
+                    </div>
+                    <div class="movie-list-actions">
+                        <button class="admin-btn" data-id="${movie.id}" onclick="editMovie(${movie.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                `;
+                moviesList.appendChild(movieItem);
+            });
+        }
+
+        function updateLegalForm() {
+            const selectedPage = legalPageSelect.value;
+            if (legalContent[selectedPage]) {
+                legalTitle.value = legalContent[selectedPage].title || '';
+                legalContentEditor.value = legalContent[selectedPage].content || '';
+            }
+        }
+
+        function editMovie(id) {
+            const movie = movies.find(m => m.id === id);
+            if (!movie) return;
+            
+            currentEditingMovieId = id;
+            isEditingMovie = true;
+            
+            // Fill form with movie data
+            movieTitle.value = movie.title || '';
+            movieYear.value = movie.year || '';
+            movieDuration.value = movie.duration || '';
+            movieGenre.value = movie.genre || '';
+            movieDescription.value = movie.description || '';
+            movieFullDescription.value = movie.fullDescription || '';
+            moviePoster.value = movie.poster || '';
+            movieId.value = movie.id || '';
+            
+            // Show form and hide add button
+            movieForm.style.display = 'block';
+            deleteMovieBtn.style.display = 'inline-block';
+            
+            // Scroll to form
+            movieForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetMovieForm() {
+            currentEditingMovieId = null;
+            isEditingMovie = false;
+            
+            // Clear form
+            movieTitle.value = '';
+            movieYear.value = '';
+            movieDuration.value = '';
+            movieGenre.value = '';
+            movieDescription.value = '';
+            movieFullDescription.value = '';
+            moviePoster.value = '';
+            movieId.value = '';
+            
+            // Hide form and show add button
+            movieForm.style.display = 'none';
+            deleteMovieBtn.style.display = 'none';
+        }
+
+        function updateCacheStatus() {
+            const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+            if (!timestamp) {
+                cacheStatus.innerHTML = '<strong>Status:</strong> No cache found<br><strong>Last Updated:</strong> Never';
+                return;
+            }
+            
+            const lastUpdate = new Date(parseInt(timestamp));
+            const now = new Date();
+            const age = now - lastUpdate;
+            const ageMinutes = Math.floor(age / 60000);
+            const ageHours = Math.floor(ageMinutes / 60);
+            
+            let status = 'Valid';
+            let statusClass = '';
+            
+            if (age > CACHE_DURATION) {
+                status = 'Expired';
+                statusClass = 'error';
+            }
+            
+            cacheStatus.innerHTML = `
+                <strong>Status:</strong> <span style="color: ${status === 'Valid' ? '#00b894' : '#e94560'}">${status}</span><br>
+                <strong>Last Updated:</strong> ${lastUpdate.toLocaleString()}<br>
+                <strong>Age:</strong> ${ageHours > 0 ? ageHours + ' hours, ' : ''}${ageMinutes % 60} minutes ago<br>
+                <strong>Settings:</strong> ${getFromCache(CACHE_KEYS.SETTINGS) ? 'Cached' : 'Not cached'}<br>
+                <strong>Movies:</strong> ${getFromCache(CACHE_KEYS.MOVIES) ? movies.length + ' movies cached' : 'Not cached'}<br>
+                <strong>Legal Content:</strong> ${getFromCache(CACHE_KEYS.LEGAL) ? 'Cached' : 'Not cached'}
+            `;
+            
+            if (statusClass) {
+                cacheStatus.classList.add(statusClass);
+            } else {
+                cacheStatus.classList.remove('error');
+            }
+        }
+
+        function showAdminStatus(message, type = 'success') {
+            adminStatus.textContent = message;
+            adminStatus.className = 'admin-status';
+            
+            if (type === 'error') {
+                adminStatus.classList.add('error');
+            }
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                adminStatus.textContent = '';
+            }, 5000);
+        }
+
+        // ============================
+        // EVENT LISTENERS SETUP
+        // ============================
         function setupEventListeners() {
             // Desktop Navigation links
             homeLink.addEventListener('click', (e) => {
@@ -1424,7 +2661,32 @@
             
             // Wait page continue button
             continueBtn.addEventListener('click', () => {
-                showContentPage(currentMovieId);
+                showSubscribePage();
+            });
+            
+            // Instant access buttons
+            instantAccessBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                instantAccessClicked = true;
+                startWaitCountdown();
+                // Open link in new tab
+                if (adminSettings.instantAccessLink && adminSettings.instantAccessLink !== '#') {
+                    window.open(adminSettings.instantAccessLink, '_blank');
+                }
+            });
+            
+            subscribeInstantAccessBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Open link in new tab
+                if (adminSettings.instantAccessLink && adminSettings.instantAccessLink !== '#') {
+                    window.open(adminSettings.instantAccessLink, '_blank');
+                }
+            });
+            
+            // Subscribed button
+            subscribedBtn.addEventListener('click', () => {
+                youtubeSection.style.display = 'none';
+                telegramSection.style.display = 'block';
             });
             
             // Interstitial ad close button
@@ -1437,11 +2699,6 @@
             closeMenuBtn.addEventListener('click', closeMobileMenu);
             
             // Back buttons
-            backToHomeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                showHomePage();
-            });
-            
             backToHomeFromLegalBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 showHomePage();
@@ -1452,15 +2709,186 @@
                 showHomePage();
             });
             
+            // Admin Panel Event Listeners
+            closeAdminBtn.addEventListener('click', closeAdminPanel);
+            
+            // Admin tabs
+            adminTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    adminTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding section
+                    adminSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === tabId + 'Tab') {
+                            section.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Save settings
+            saveSettingsBtn.addEventListener('click', async () => {
+                adminSettings.youtubeChannelLink = adminYoutubeLink.value;
+                adminSettings.telegramBotLink = adminTelegramLink.value;
+                adminSettings.instantAccessLink = adminInstantLink.value;
+                adminSettings.defaultDuration = adminDefaultDuration.value;
+                adminSettings.waitCountdownTime = parseInt(adminWaitCountdown.value) || 30;
+                adminSettings.subscribeCountdownTime = parseInt(adminSubscribeCountdown.value) || 60;
+                
+                const success = await saveSettingsToFirebase();
+                if (success) {
+                    updateUIWithData();
+                }
+            });
+            
+            // Add movie button
+            addMovieBtn.addEventListener('click', () => {
+                resetMovieForm();
+                movieForm.style.display = 'block';
+                movieForm.scrollIntoView({ behavior: 'smooth' });
+            });
+            
+            // Save movie
+            saveMovieBtn.addEventListener('click', async () => {
+                const movieData = {
+                    title: movieTitle.value,
+                    year: parseInt(movieYear.value) || 2023,
+                    duration: movieDuration.value,
+                    genre: movieGenre.value,
+                    description: movieDescription.value,
+                    fullDescription: movieFullDescription.value,
+                    poster: moviePoster.value
+                };
+                
+                if (!movieData.title || !movieData.poster) {
+                    showAdminStatus('Title and poster URL are required!', 'error');
+                    return;
+                }
+                
+                if (isEditingMovie && currentEditingMovieId) {
+                    // Update existing movie
+                    const index = movies.findIndex(m => m.id === currentEditingMovieId);
+                    if (index !== -1) {
+                        movies[index] = { ...movies[index], ...movieData };
+                    }
+                } else {
+                    // Add new movie
+                    const newId = movies.length > 0 ? Math.max(...movies.map(m => m.id)) + 1 : 1;
+                    movieData.id = newId;
+                    movies.push(movieData);
+                }
+                
+                const success = await saveMoviesToFirebase();
+                if (success) {
+                    updateMoviesList();
+                    generateMovieCards();
+                    resetMovieForm();
+                }
+            });
+            
+            // Cancel movie edit
+            cancelMovieBtn.addEventListener('click', resetMovieForm);
+            
+            // Delete movie
+            deleteMovieBtn.addEventListener('click', async () => {
+                if (!currentEditingMovieId || !confirm('Are you sure you want to delete this movie?')) {
+                    return;
+                }
+                
+                const index = movies.findIndex(m => m.id === currentEditingMovieId);
+                if (index !== -1) {
+                    movies.splice(index, 1);
+                    const success = await saveMoviesToFirebase();
+                    if (success) {
+                        updateMoviesList();
+                        generateMovieCards();
+                        resetMovieForm();
+                    }
+                }
+            });
+            
+            // Legal page select change
+            legalPageSelect.addEventListener('change', updateLegalForm);
+            
+            // Save legal content
+            saveLegalBtn.addEventListener('click', async () => {
+                const selectedPage = legalPageSelect.value;
+                
+                if (!legalContent[selectedPage]) {
+                    legalContent[selectedPage] = {};
+                }
+                
+                legalContent[selectedPage].title = legalTitle.value;
+                legalContent[selectedPage].content = legalContentEditor.value;
+                
+                await saveLegalToFirebase();
+            });
+            
+            // Cache management buttons
+            refreshCacheBtn.addEventListener('click', async () => {
+                showAdminStatus('Refreshing cache from Firebase...', 'success');
+                const success = await loadFromFirebase();
+                if (success) {
+                    updateUIWithData();
+                    updateCacheStatus();
+                    showAdminStatus('Cache refreshed successfully!', 'success');
+                } else {
+                    showAdminStatus('Failed to refresh cache from Firebase', 'error');
+                }
+            });
+            
+            clearCacheBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear all local cache?')) {
+                    clearCache();
+                    updateCacheStatus();
+                    showAdminStatus('Cache cleared successfully!', 'success');
+                }
+            });
+            
+            exportDataBtn.addEventListener('click', () => {
+                const exportData = {
+                    settings: adminSettings,
+                    movies: movies,
+                    legal: legalContent,
+                    exportedAt: new Date().toISOString()
+                };
+                
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = 'moviehub-export.json';
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                showAdminStatus('Data exported successfully!', 'success');
+            });
+            
+            // Setup search functionality
+            setupSearch();
+            
             // Close mobile menu when clicking outside
             document.addEventListener('click', (e) => {
                 if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
                     closeMobileMenu();
                 }
+                
+                if (!adminPanel.contains(e.target) && adminPanel.classList.contains('active')) {
+                    // Don't close on outside click for admin panel
+                }
             });
         }
 
-        // Show interstitial ad (simulated)
+        // ============================
+        // PAGE NAVIGATION FUNCTIONS
+        // ============================
         function showInterstitialAd(movieId) {
             currentMovieId = movieId;
             interstitialShown = true;
@@ -1484,7 +2912,6 @@
             }, 1000);
         }
 
-        // Close interstitial ad
         function closeInterstitialAd() {
             clearInterval(adInterval);
             interstitialAd.style.display = 'none';
@@ -1494,19 +2921,31 @@
             showWaitPage();
         }
 
-        // Show wait page
         function showWaitPage() {
+            // Reset state
+            instantAccessClicked = false;
+            
             // Hide other pages
             homePage.style.display = 'none';
-            contentPage.style.display = 'none';
+            subscribePage.style.display = 'none';
             legalPages.style.display = 'none';
             aboutPage.style.display = 'none';
             
             // Show wait page
             waitPage.style.display = 'block';
             
-            // Start countdown
-            let seconds = 30;
+            // Reset countdown
+            countdownElement.textContent = adminSettings.waitCountdownTime || 30;
+            continueBtn.disabled = true;
+            continueBtn.textContent = 'Please Wait...';
+        }
+
+        function startWaitCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            let seconds = adminSettings.waitCountdownTime || 30;
             countdownElement.textContent = seconds;
             continueBtn.disabled = true;
             continueBtn.textContent = 'Please Wait...';
@@ -1524,9 +2963,8 @@
             }, 1000);
         }
 
-        // Show content page
-        function showContentPage(movieId) {
-            // Clear countdown
+        function showSubscribePage() {
+            // Clear wait countdown
             clearInterval(countdownInterval);
             
             // Hide other pages
@@ -1535,48 +2973,48 @@
             legalPages.style.display = 'none';
             aboutPage.style.display = 'none';
             
-            // Show content page
-            contentPage.style.display = 'block';
+            // Show subscribe page
+            subscribePage.style.display = 'block';
             
-            // Find selected movie
-            const movie = movies.find(m => m.id === movieId);
+            // Hide YouTube and Telegram sections initially
+            youtubeSection.style.display = 'none';
+            telegramSection.style.display = 'none';
             
-            // Populate movie details
-            movieDetailContainer.innerHTML = `
-                <div>
-                    <img src="${movie.poster}" alt="${movie.title}" class="detail-poster">
-                </div>
-                <div class="movie-details">
-                    <h1>${movie.title}</h1>
-                    <div class="movie-year-genre">
-                        <span><i class="far fa-calendar"></i> ${movie.year}</span>
-                        <span><i class="fas fa-tags"></i> ${movie.genre}</span>
-                    </div>
-                    <p class="movie-full-description">${movie.fullDescription}</p>
-                    
-                    <div class="trailer-container">
-                        <h2 class="trailer-title">Official Trailer</h2>
-                        <div class="trailer-placeholder">
-                            <i class="fab fa-youtube"></i>
-                            <p>Official YouTube trailer would be embedded here</p>
-                            <p><small>We do not host or stream any movies. This is for informational purposes only.</small></p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Show popunder ad on content page (only once per session)
-            if (!popunderShown) {
-                setTimeout(showPopunderAd, 1000);
-                popunderShown = true;
-            }
+            // Start subscribe countdown (1 minute)
+            startSubscribeCountdown();
         }
 
-        // Show home page
+        function startSubscribeCountdown() {
+            if (subscribeCountdownInterval) {
+                clearInterval(subscribeCountdownInterval);
+            }
+            
+            let seconds = adminSettings.subscribeCountdownTime || 60;
+            subscribeCountdown.textContent = seconds;
+            
+            subscribeCountdownInterval = setInterval(() => {
+                seconds--;
+                subscribeCountdown.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(subscribeCountdownInterval);
+                    subscribeCountdown.textContent = '0';
+                    
+                    // Show YouTube section after countdown
+                    youtubeSection.style.display = 'block';
+                    subscribeCountdown.style.display = 'none';
+                }
+            }, 1000);
+        }
+
         function showHomePage() {
+            // Clear intervals
+            clearInterval(countdownInterval);
+            clearInterval(subscribeCountdownInterval);
+            
             // Hide other pages
             waitPage.style.display = 'none';
-            contentPage.style.display = 'none';
+            subscribePage.style.display = 'none';
             legalPages.style.display = 'none';
             aboutPage.style.display = 'none';
             
@@ -1587,12 +3025,11 @@
             closeMobileMenu();
         }
 
-        // Show legal page
         function showLegalPage(page) {
             // Hide other pages
             homePage.style.display = 'none';
             waitPage.style.display = 'none';
-            contentPage.style.display = 'none';
+            subscribePage.style.display = 'none';
             aboutPage.style.display = 'none';
             
             // Show legal page
@@ -1607,12 +3044,11 @@
             closeMobileMenu();
         }
 
-        // Show about page
         function showAboutPage() {
             // Hide other pages
             homePage.style.display = 'none';
             waitPage.style.display = 'none';
-            contentPage.style.display = 'none';
+            subscribePage.style.display = 'none';
             legalPages.style.display = 'none';
             
             // Show about page
@@ -1622,30 +3058,28 @@
             closeMobileMenu();
         }
 
-        // Open mobile menu
         function openMobileMenu() {
             mobileMenu.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
-        // Close mobile menu
         function closeMobileMenu() {
             mobileMenu.classList.remove('active');
             mobileLegalMenu.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
 
-        // Show popunder ad (simulated)
         function showPopunderAd() {
-            // In a real implementation, this would trigger Adsterra popunder code
-            console.log("Popunder ad would show here (Adsterra code)");
-            
-            // For demo purposes, we'll just log it
-            // Actual implementation: Include Adsterra popunder script
-            // Example: //pl21605978.highperformancecpm.com/3c/8a/ff/3c8aff9d4b2c0c9c42f63c2c2c1b9d5d.js
+            // The actual popunder is already included in the head section
+            console.log("Popunder ad loaded from head section");
         }
 
-        // Initialize the website
+        // Make editMovie function globally available for inline onclick
+        window.editMovie = editMovie;
+
+        // ============================
+        // START INITIALIZATION
+        // ============================
         window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
