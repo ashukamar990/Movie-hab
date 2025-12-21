@@ -1524,10 +1524,10 @@
         // LOCAL STORAGE CACHE SYSTEM
         // ============================
         const CACHE_KEYS = {
-            SETTINGS: 'moviehub_settings_v2',
-            MOVIES: 'moviehub_movies_v2',
-            LEGAL: 'moviehub_legal_v2',
-            TIMESTAMP: 'moviehub_cache_timestamp_v2'
+            SETTINGS: 'moviehub_settings_v4',
+            MOVIES: 'moviehub_movies_v4',
+            LEGAL: 'moviehub_legal_v4',
+            TIMESTAMP: 'moviehub_cache_timestamp_v4'
         };
 
         const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -1579,7 +1579,10 @@
             instantAccessLink: "https://www.effectivegatecpm.com/hgsuvg6e?key=fc9e62ede19fc0ec18e7ddeb811496ae",
             defaultDuration: "2h 15min",
             waitCountdownTime: 30,
-            subscribeCountdownTime: 60
+            subscribeCountdownTime: 60,
+            bannerAdKey: "07db903793df9621b6952682b40516cc",
+            bannerAdWidth: 728,
+            bannerAdHeight: 90
         };
 
         const defaultMovies = [
@@ -1851,7 +1854,7 @@
         // GLOBAL VARIABLES
         // ============================
         let adminSettings = { ...defaultAdminSettings };
-        let movies = [...defaultMovies ];
+        let movies = [...defaultMovies];
         let legalContent = { ...defaultLegalContent };
         
         // DOM Elements
@@ -1993,32 +1996,65 @@
                     console.log('Settings loaded from Firebase');
                 }
                 
-                // Load movies
+                // Load movies - Convert from Admin Panel format
                 const moviesSnapshot = await database.ref('movies').once('value');
                 if (moviesSnapshot.exists()) {
-                    const firebaseMovies = [];
                     const moviesData = moviesSnapshot.val();
+                    movies = [];
                     
-                    Object.keys(moviesData).forEach(key => {
-                        firebaseMovies.push({
-                            id: parseInt(key),
-                            ...moviesData[key]
+                    // Check if movies is an array or object
+                    if (Array.isArray(moviesData)) {
+                        movies = moviesData;
+                    } else {
+                        // Convert object to array
+                        Object.values(moviesData).forEach(movie => {
+                            if (movie && movie.id) {
+                                movies.push(movie);
+                            }
                         });
+                    }
+                    
+                    // Remove duplicates based on ID
+                    const uniqueMovies = [];
+                    const seenIds = new Set();
+                    
+                    movies.forEach(movie => {
+                        if (movie && movie.id && !seenIds.has(movie.id)) {
+                            seenIds.add(movie.id);
+                            uniqueMovies.push(movie);
+                        }
                     });
                     
+                    movies = uniqueMovies;
                     // Sort by ID
-                    firebaseMovies.sort((a, b) => a.id - b.id);
-                    movies = firebaseMovies;
+                    movies.sort((a, b) => a.id - b.id);
                     saveToCache(CACHE_KEYS.MOVIES, movies);
                     console.log(`Movies loaded from Firebase: ${movies.length} movies`);
                 }
                 
                 // Load legal content
-                const legalSnapshot = await database.ref('legal').once('value');
+                const legalSnapshot = await database.ref('legalContent').once('value');
                 if (legalSnapshot.exists()) {
                     legalContent = { ...defaultLegalContent, ...legalSnapshot.val() };
                     saveToCache(CACHE_KEYS.LEGAL, legalContent);
                     console.log('Legal content loaded from Firebase');
+                } else {
+                    // Try old path for backward compatibility
+                    const oldLegalSnapshot = await database.ref('legal').once('value');
+                    if (oldLegalSnapshot.exists()) {
+                        legalContent = { ...defaultLegalContent, ...oldLegalSnapshot.val() };
+                        saveToCache(CACHE_KEYS.LEGAL, legalContent);
+                        console.log('Legal content loaded from old path (legal)');
+                    }
+                }
+                
+                // Load ad settings
+                const adsSnapshot = await database.ref('adSettings').once('value');
+                if (adsSnapshot.exists()) {
+                    const adSettings = adsSnapshot.val();
+                    adminSettings = { ...adminSettings, ...adSettings };
+                    saveToCache(CACHE_KEYS.SETTINGS, adminSettings);
+                    console.log('Ad settings loaded from Firebase');
                 }
                 
                 console.log('Data loaded successfully from Firebase');
@@ -2044,11 +2080,23 @@
 
         async function saveMoviesToFirebase() {
             try {
-                // Convert array to object with IDs as keys
-                const moviesObject = {};
+                // Remove any duplicate movies before saving
+                const uniqueMovies = [];
+                const seenIds = new Set();
+                
                 movies.forEach(movie => {
-                    const { id, ...movieData } = movie;
-                    moviesObject[id] = movieData;
+                    if (movie && movie.id && !seenIds.has(movie.id)) {
+                        seenIds.add(movie.id);
+                        uniqueMovies.push(movie);
+                    }
+                });
+                
+                movies = uniqueMovies;
+                
+                // Convert array to object with indexes as keys
+                const moviesObject = {};
+                movies.forEach((movie, index) => {
+                    moviesObject[index] = movie;
                 });
                 
                 await database.ref('movies').set(moviesObject);
@@ -2064,6 +2112,7 @@
 
         async function saveLegalToFirebase() {
             try {
+                await database.ref('legalContent').set(legalContent);
                 await database.ref('legal').set(legalContent);
                 saveToCache(CACHE_KEYS.LEGAL, legalContent);
                 showAdminStatus('Legal content saved successfully!', 'success');
@@ -2118,6 +2167,19 @@
             const cachedMovies = getFromCache(CACHE_KEYS.MOVIES);
             if (cachedMovies) {
                 movies = cachedMovies;
+                // Remove duplicates from cache too
+                const uniqueMovies = [];
+                const seenIds = new Set();
+                
+                movies.forEach(movie => {
+                    if (movie && movie.id && !seenIds.has(movie.id)) {
+                        seenIds.add(movie.id);
+                        uniqueMovies.push(movie);
+                    }
+                });
+                
+                movies = uniqueMovies;
+                movies.sort((a, b) => a.id - b.id);
                 console.log(`Movies loaded from cache: ${movies.length} movies`);
             }
             
@@ -2139,6 +2201,9 @@
             instantAccessBtn.href = adminSettings.instantAccessLink || '#';
             subscribeInstantAccessBtn.href = adminSettings.instantAccessLink || '#';
             
+            // Update banner ads with settings
+            updateBannerAds();
+            
             // Generate movie cards
             generateMovieCards();
             
@@ -2149,6 +2214,38 @@
             
             // Update cache status
             updateCacheStatus();
+        }
+
+        function updateBannerAds() {
+            // Update banner ad script with current settings
+            const bannerKey = adminSettings.bannerAdKey || '07db903793df9621b6952682b40516cc';
+            const bannerWidth = adminSettings.bannerAdWidth || 728;
+            const bannerHeight = adminSettings.bannerAdHeight || 90;
+            
+            // Update all banner ad scripts on the page
+            document.querySelectorAll('script[src*="highperformanceformat.com"]').forEach(script => {
+                if (script.previousElementSibling && 
+                    script.previousElementSibling.textContent.includes('atOptions')) {
+                    
+                    // Update the atOptions before the script
+                    const atOptionsScript = script.previousElementSibling;
+                    atOptionsScript.textContent = `
+                        atOptions = {
+                            'key' : '${bannerKey}',
+                            'format' : 'iframe',
+                            'height' : ${bannerHeight},
+                            'width' : ${bannerWidth},
+                            'params' : {}
+                        };
+                    `;
+                    
+                    // Update script src
+                    const newSrc = `https://www.highperformanceformat.com/${bannerKey}/invoke.js`;
+                    if (script.src !== newSrc) {
+                        script.src = newSrc;
+                    }
+                }
+            });
         }
 
         // ============================
@@ -2753,7 +2850,7 @@
                 movieForm.scrollIntoView({ behavior: 'smooth' });
             });
             
-            // Save movie
+            // Save movie - FIXED: Auto-generate unique ID
             saveMovieBtn.addEventListener('click', async () => {
                 const movieData = {
                     title: movieTitle.value,
@@ -2777,8 +2874,13 @@
                         movies[index] = { ...movies[index], ...movieData };
                     }
                 } else {
-                    // Add new movie
-                    const newId = movies.length > 0 ? Math.max(...movies.map(m => m.id)) + 1 : 1;
+                    // Add new movie - Generate unique ID
+                    let newId = 1;
+                    if (movies.length > 0) {
+                        // Find the maximum ID and add 1
+                        const maxId = Math.max(...movies.map(m => m.id));
+                        newId = maxId + 1;
+                    }
                     movieData.id = newId;
                     movies.push(movieData);
                 }
@@ -2794,7 +2896,7 @@
             // Cancel movie edit
             cancelMovieBtn.addEventListener('click', resetMovieForm);
             
-            // Delete movie
+            // Delete movie - FIXED: Proper deletion
             deleteMovieBtn.addEventListener('click', async () => {
                 if (!currentEditingMovieId || !confirm('Are you sure you want to delete this movie?')) {
                     return;
@@ -2806,8 +2908,9 @@
                     const success = await saveMoviesToFirebase();
                     if (success) {
                         updateMoviesList();
-                        generateMovieCards();
+                        generateMovieCards(); // Refresh the main page
                         resetMovieForm();
+                        showAdminStatus('Movie deleted successfully!', 'success');
                     }
                 }
             });
